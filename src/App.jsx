@@ -1,26 +1,6 @@
 
-function Header() {
-  return (
-    <header>
-      <h2>ShopEasy</h2>
-      <nav>
-        <a href="/">Home</a>{" "}
-        <a href="/products">Products</a>{" "}
-        <a href="/cart">Cart</a>
-      </nav>
-    </header>
-  );
-}
-
-function ProductCard({ name, price }) {
-  return (
-    <div>
-      <h3>{name}</h3>
-      <p>Price: ${price}</p>
-      <button>Add to Cart</button>
-    </div>
-  );
-}
+import Header from "./components/Header";
+import ProductCard from "./components/ProductCard";
 
 function App() {
   const products = [
@@ -28,20 +8,24 @@ function App() {
     { id: 2, name: "Sneakers", price: 50 },
     { id: 3, name: "Backpack", price: 35 },
     { id: 4, name: "Headphones", price: 40 },
+    { id: 5, name: "Smart Watch", price: 60 },
   ];
 
   return (
     <div>
       <Header />
+
       <h1>Our Products</h1>
 
-      {products.map((product) => (
-        <ProductCard
-          key={product.id}
-          name={product.name}
-          price={product.price}
-        />
-      ))}
+      <div className="product-grid">
+  {products.map((product) => (
+    <ProductCard
+      key={product.id}
+      name={product.name}
+      price={product.price}
+    />
+  ))}
+</div>
     </div>
   );
 }
