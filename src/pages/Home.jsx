@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 
@@ -7,6 +6,9 @@ function Home({ products, handleAddToCart }) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOrder, setSortOrder] = useState("default");
+  const [apiProducts, setApiProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
   const filteredProducts = products
     .filter((product) =>
@@ -22,6 +24,30 @@ function Home({ products, handleAddToCart }) {
     if (sortOrder === "high-to-low") return b.price - a.price;
     return 0;
   });
+
+  useEffect(() => {
+  async function fetchProducts() {
+    try {
+      const response = await fetch(
+        "https://fakestoreapi.com/products"
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch products");
+      }
+
+      const data = await response.json();
+      console.log("API Products:", data);
+      setApiProducts(data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  fetchProducts();
+}, []);
 
   return (
     <main>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -13,7 +13,22 @@ import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 
 function App() {
-  const [cartItems, setCartItems] = useState([]);
+  
+const [cartItems, setCartItems] = useState(() => {
+  try {
+    const savedCart = localStorage.getItem("cartItems");
+    return savedCart ? JSON.parse(savedCart) : [];
+  } catch {
+    return [];
+  }
+});
+
+
+useEffect(() => {
+  localStorage.setItem("cartItems", JSON.stringify(cartItems));
+}, [cartItems]);
+
+
 
   const products = [
     { id: 1, name: "T-Shirt", price: 20, category: "Clothing" },
