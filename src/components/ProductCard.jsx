@@ -1,7 +1,7 @@
 
 import { useState } from "react";
 
-function ProductCard({ name, price, onAddToCart }) {
+function ProductCard({ name, price, image, onAddToCart }) {
   const [added, setAdded] = useState(false);
 
   function handleAddToCart() {
@@ -12,7 +12,11 @@ function ProductCard({ name, price, onAddToCart }) {
   return (
     <div className="product-card">
       <div className="product-image">
-        <span>🛍️</span>
+        {image ? (
+          <img src={image} alt={name} />
+        ) : (
+          <span>🛍️</span>
+        )}
       </div>
 
       <div className="product-info">
