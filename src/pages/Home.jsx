@@ -1,51 +1,19 @@
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import ProductCard from "../components/ProductCard";
 
-function Home({ handleAddToCart }) {
+function Home({
+  products,
+  loading,
+  error,
+  handleAddToCart,
+  onRetry,
+}) {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [sortOrder, setSortOrder] = useState("default");
 
-  const [apiProducts, setApiProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const response = await fetch(
-          "https://fakestoreapi.com/products"
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch products");
-        }
-
-        const data = await response.json();
-
-        const formattedProducts = data.map((product) => ({
-          id: product.id,
-          name: product.title,
-          price: product.price,
-          category: product.category,
-          image: product.image,
-        }));
-
-        console.log("API Products:", formattedProducts);
-        setApiProducts(formattedProducts);
-      } catch (err) {
-        setError(err.message || "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchProducts();
-  }, []);
-
-  // Loading state
   if (loading) {
     return (
       <main>
@@ -55,21 +23,21 @@ function Home({ handleAddToCart }) {
     );
   }
 
-  // Error state
   if (error) {
     return (
       <main>
         <h1>Our Products</h1>
-        <p>Error: {error}</p>
-        <button onClick={() => window.location.reload()}>
-          Try Again
-        </button>
+        <p>Unable to load products: {error}</p>
+        <button onClick={onRetry}>Try Again</button>
       </main>
     );
   }
 
-  // Search and category filtering
-  const filteredProducts = apiProducts
+  const categories = [
+    ...new Set(products.map((product) => product.category)),
+  ];
+
+  const filteredProducts = products
     .filter((product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase())
     )
@@ -79,7 +47,6 @@ function Home({ handleAddToCart }) {
         product.category === selectedCategory
     );
 
-  // Price sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     if (sortOrder === "low-to-high") {
       return a.price - b.price;
@@ -109,10 +76,12 @@ function Home({ handleAddToCart }) {
           onChange={(e) => setSelectedCategory(e.target.value)}
         >
           <option value="All">All Categories</option>
-          <option value="men's clothing">Men's Clothing</option>
-          <option value="women's clothing">Women's Clothing</option>
-          <option value="jewelery">Jewelery</option>
-          <option value="electronics">Electronics</option>
+
+          {categories.map((category) => (
+            <option key={category} value={category}>
+              {category}
+            </option>
+          ))}
         </select>
 
         <select

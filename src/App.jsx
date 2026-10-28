@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -7,56 +7,86 @@ import {
   Link,
 } from "react-router-dom";
 
-import Header from "./components/Header";
 import Home from "./pages/Home";
 import ProductDetails from "./pages/ProductDetails";
 import Cart from "./pages/Cart";
 
 function App() {
-  
-const [cartItems, setCartItems] = useState(() => {
-  try {
-    const savedCart = localStorage.getItem("cartItems");
-    return savedCart ? JSON.parse(savedCart) : [];
-  } catch {
-    return [];
-  }
-});
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
+  const [cartItems, setCartItems] = useState(() => {
+    try {
+      const savedCart = localStorage.getItem("cartItems");
+      return savedCart ? JSON.parse(savedCart) : [];
+    } catch {
+      return [];
+    }
+  });
 
-useEffect(() => {
-  localStorage.setItem("cartItems", JSON.stringify(cartItems));
-}, [cartItems]);
+  // Fetch products once for the whole application
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const response = await fetch(
+          "https://fakestoreapi.com/products"
+        );
 
+        if (!response.ok) {
+          throw new Error("Failed to fetch products");
+        }
 
+        const data = await response.json();
 
-  const products = [
-    { id: 1, name: "T-Shirt", price: 20, category: "Clothing" },
-    { id: 2, name: "Sneakers", price: 50, category: "Shoes" },
-    { id: 3, name: "Backpack", price: 35, category: "Accessories" },
-    { id: 4, name: "Headphones", price: 40, category: "Electronics" },
-    { id: 5, name: "Smart Watch", price: 60, category: "Electronics" },
-  ];
+        const formattedProducts = data.map((product) => ({
+          id: product.id,
+          name: product.title,
+          price: product.price,
+          category: product.category,
+          image: product.image,
+          description: product.description,
+        }));
 
+        setProducts(formattedProducts);
+      } catch (err) {
+        setError(err.message || "Something went wrong");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchProducts();
+  }, []);
+
+  // Save cart whenever it changes
+  useEffect(() => {
+    localStorage.setItem("cartItems", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  // Add product to cart or increase its quantity
   function handleAddToCart(product) {
-    setCartItems((items) => {
-      const existing = items.find((item) => item.id === product.id);
+    setCartItems((previousItems) => {
+      const existingItem = previousItems.find(
+        (item) => item.id === product.id
+      );
 
-      if (existing) {
-        return items.map((item) =>
+      if (existingItem) {
+        return previousItems.map((item) =>
           item.id === product.id
             ? { ...item, quantity: item.quantity + 1 }
             : item
         );
       }
 
-      return [...items, { ...product, quantity: 1 }];
+      return [...previousItems, { ...product, quantity: 1 }];
     });
   }
 
+  // Increase or decrease quantity
   function updateQuantity(productId, change) {
-    setCartItems((items) =>
-      items
+    setCartItems((previousItems) =>
+      previousItems
         .map((item) =>
           item.id === productId
             ? { ...item, quantity: item.quantity + change }
@@ -66,72 +96,75 @@ useEffect(() => {
     );
   }
 
+  // Remove item from cart
   function removeFromCart(productId) {
-    setCartItems((items) =>
-      items.filter((item) => item.id !== productId)
+    setCartItems((previousItems) =>
+      previousItems.filter((item) => item.id !== productId)
     );
   }
 
   const cartCount = cartItems.reduce(
-    (sum, item) => sum + item.quantity,
+    (total, item) => total + item.quantity,
     0
   );
 
   return (
     <BrowserRouter>
-      <div className="app">
-        <header>
-          <h2>ShopEasy</h2>
-          <nav>
-            <Link to="/">Home</Link>
-            <Link to="/#products">Products</Link>
-            <Link to="/cart">Cart ({cartCount})</Link>
-          </nav>
-        </header>
+      <header className="site-header">
+        <Link to="/" className="brand">
+          ShopEasy
+        </Link>
 
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <Home
-                products={products}
-                handleAddToCart={handleAddToCart}
-              />
-            }
-          />
+        <nav>
+          <Link to="/">Home</Link>
+          <Link to="/cart">Cart ({cartCount})</Link>
+        </nav>
+      </header>
 
-          <Route
-            path="/products/:id"
-            element={
-              <ProductDetails
-                products={products}
-                handleAddToCart={handleAddToCart}
-              />
-            }
-          />
+      <Routes>
+        <Route
+          path="/"
+          element={
+            <Home
+              products={products}
+              loading={loading}
+              error={error}
+              handleAddToCart={handleAddToCart}
+            />
+          }
+        />
 
-          <Route
-            path="/cart"
-            element={
-              <Cart
-                cartItems={cartItems}
-                updateQuantity={updateQuantity}
-                removeFromCart={removeFromCart}
-              />
-            }
-          />
+        <Route
+          path="/products/:id"
+          element={
+            <ProductDetails
+              products={products}
+              handleAddToCart={handleAddToCart}
+            />
+          }
+        />
 
-          <Route
-            path="*"
-            element={
-              <main>
-                <h1>Page Not Found</h1>
-                <Link to="/">Back to Home</Link>
-              </main>
-            }
-          />
-        </Routes>
-      </div>
+        <Route
+          path="/cart"
+          element={
+            <Cart
+              cartItems={cartItems}
+              updateQuantity={updateQuantity}
+              removeFromCart={removeFromCart}
+            />
+          }
+        />
+
+        <Route
+          path="*"
+          element={
+            <main>
+              <h1>Page Not Found</h1>
+              <Link to="/">Back to Home</Link>
+            </main>
+          }
+        />
+      </Routes>
     </BrowserRouter>
   );
 }
